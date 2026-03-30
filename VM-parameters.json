@@ -1,0 +1,12 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "switzerlandnorth"
+        },
+        "virtualNetworkId": {
+            "value": "/subscriptions/4ee84293-12d3-46b5-9e7f-613f200c7448/resourceGroups/Main-IT/providers/Microsoft.Network/virtualNetworks/Swiss"
+        }
+    }
+}

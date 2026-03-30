@@ -1,0 +1,288 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminPassword": {
+            "type": "secureString"
+        },
+        "adminUsername": {
+            "defaultValue": "mahesh",
+            "type": "string"
+        },
+        "autoShutdownNotificationLocale": {
+            "defaultValue": "en",
+            "type": "string"
+        },
+        "autoShutdownNotificationStatus": {
+            "defaultValue": "Disabled",
+            "type": "string"
+        },
+        "autoShutdownStatus": {
+            "defaultValue": "Enabled",
+            "type": "string"
+        },
+        "autoShutdownTime": {
+            "defaultValue": "21:00",
+            "type": "string"
+        },
+        "autoShutdownTimeZone": {
+            "defaultValue": "Central Standard Time",
+            "type": "string"
+        },
+        "enableAcceleratedNetworking": {
+            "defaultValue": true,
+            "type": "bool"
+        },
+        "enableHotpatching": {
+            "defaultValue": false,
+            "type": "bool"
+        },
+        "enablePeriodicAssessment": {
+            "defaultValue": "ImageDefault",
+            "type": "string"
+        },
+        "hibernationEnabled": {
+            "defaultValue": false,
+            "type": "bool"
+        },
+        "location": {
+            "type": "string"
+        },
+        "networkInterfaceName": {
+            "defaultValue": "[substring(concat('NIC-', parameters('virtualMachineName')), 0, 8)]",
+            "type": "string"
+        },
+        "networkSecurityGroupName": {
+            "defaultValue": "[substring(concat('NSG-', parameters('virtualMachineName')), 0, 8)]",
+            "type": "string"
+        },
+        "networkSecurityGroupRules": {
+            "defaultValue": [
+                {
+                    "name": "RDP",
+                    "properties": {
+                        "access": "Allow",
+                        "destinationAddressPrefix": "*",
+                        "destinationPortRange": "3389",
+                        "direction": "Inbound",
+                        "priority": 300,
+                        "protocol": "TCP",
+                        "sourceAddressPrefix": "*",
+                        "sourcePortRange": "*"
+                    }
+                },
+                {
+                    "name": "HTTP",
+                    "properties": {
+                        "access": "Allow",
+                        "destinationAddressPrefix": "*",
+                        "destinationPortRange": "80",
+                        "direction": "Inbound",
+                        "priority": 320,
+                        "protocol": "TCP",
+                        "sourceAddressPrefix": "*",
+                        "sourcePortRange": "*"
+                    }
+                },
+                {
+                    "name": "HTTPS",
+                    "properties": {
+                        "access": "Allow",
+                        "destinationAddressPrefix": "*",
+                        "destinationPortRange": "443",
+                        "direction": "Inbound",
+                        "priority": 340,
+                        "protocol": "TCP",
+                        "sourceAddressPrefix": "*",
+                        "sourcePortRange": "*"
+                    }
+                }
+            ],
+            "type": "array"
+        },
+        "nicDeleteOption": {
+            "defaultValue": "Delete",
+            "type": "string"
+        },
+        "osDiskDeleteOption": {
+            "defaultValue": "Delete",
+            "type": "string"
+        },
+        "osDiskType": {
+            "defaultValue": "Standard_LRS",
+            "type": "string"
+        },
+        "patchMode": {
+            "defaultValue": "AutomaticByOS",
+            "type": "string"
+        },
+        "subnetName": {
+            "defaultValue": "General",
+            "type": "string"
+        },
+        "virtualMachineComputerName": {
+            "defaultValue": "[substring(concat(resourceGroup().name, '-VM-', parameters('location')), 0, 15)]",
+            "type": "string"
+        },
+        "virtualMachineName": {
+            "defaultValue": "[substring(concat(resourceGroup().name, '-VM-', parameters('location')), 0, 15)]",
+            "type": "string"
+        },
+        "virtualMachineRG": {
+            "defaultValue": "[resourceGroup().name]",
+            "type": "string"
+        },
+        "virtualMachineSize": {
+            "defaultValue": "Standard_B2als_v2",
+            "type": "string"
+        },
+        "virtualNetworkId": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2022-11-01",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[parameters('networkInterfaceName')]",
+            "properties": {
+                "enableAcceleratedNetworking": "[parameters('enableAcceleratedNetworking')]",
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            },
+            "type": "Microsoft.Network/networkInterfaces"
+        },
+        {
+            "apiVersion": "2020-05-01",
+            "location": "[parameters('location')]",
+            "name": "[parameters('networkSecurityGroupName')]",
+            "properties": {
+                "securityRules": "[parameters('networkSecurityGroupRules')]"
+            },
+            "type": "Microsoft.Network/networkSecurityGroups"
+        },
+        {
+            "apiVersion": "2024-03-01",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
+            ],
+            "identity": {
+                "type": "systemAssigned"
+            },
+            "location": "[parameters('location')]",
+            "name": "[parameters('virtualMachineName')]",
+            "properties": {
+                "additionalCapabilities": {
+                    "hibernationEnabled": false
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]",
+                            "properties": {
+                                "deleteOption": "[parameters('nicDeleteOption')]"
+                            }
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "computerName": "[parameters('virtualMachineComputerName')]",
+                    "windowsConfiguration": {
+                        "enableAutomaticUpdates": true,
+                        "patchSettings": {
+                            "assessmentMode": "[parameters('enablePeriodicAssessment')]",
+                            "enableHotpatching": "[parameters('enableHotpatching')]",
+                            "patchMode": "[parameters('patchMode')]"
+                        },
+                        "provisionVmAgent": true
+                    }
+                },
+                "securityProfile": {},
+                "storageProfile": {
+                    "imageReference": {
+                        "offer": "WindowsServer",
+                        "publisher": "MicrosoftWindowsServer",
+                        "sku": "2025-datacenter-g2",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "deleteOption": "[parameters('osDiskDeleteOption')]",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('osDiskType')]"
+                        }
+                    }
+                }
+            },
+            "type": "Microsoft.Compute/virtualMachines"
+        },
+        {
+            "apiVersion": "2018-09-15",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[concat('shutdown-computevm-', parameters('virtualMachineName'))]",
+            "properties": {
+                "dailyRecurrence": {
+                    "time": "[parameters('autoShutdownTime')]"
+                },
+                "notificationSettings": {
+                    "notificationLocale": "[parameters('autoShutdownNotificationLocale')]",
+                    "status": "[parameters('autoShutdownNotificationStatus')]",
+                    "timeInMinutes": "30"
+                },
+                "status": "[parameters('autoShutdownStatus')]",
+                "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
+                "taskType": "ComputeVmShutdownTask",
+                "timeZoneId": "[parameters('autoShutdownTimeZone')]"
+            },
+            "type": "Microsoft.DevTestLab/schedules"
+        },
+        {
+            "apiVersion": "2024-03-01",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[concat(parameters('virtualMachineName'),'/', variables('aadLoginExtensionName'))]",
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.ActiveDirectory",
+                "settings": {
+                    "mdmId": ""
+                },
+                "type": "[variables('aadLoginExtensionName')]",
+                "typeHandlerVersion": "1.0"
+            },
+            "type": "Microsoft.Compute/virtualMachines/extensions"
+        }
+    ],
+    "variables": {
+        "aadLoginExtensionName": "AADLoginForWindows",
+        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+        "vnetId": "[parameters('virtualNetworkId')]",
+        "vnetName": "[last(split(variables('vnetId'), '/'))]"
+    }
+}
