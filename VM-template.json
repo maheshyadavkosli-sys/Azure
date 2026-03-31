@@ -49,11 +49,11 @@
             "type": "string"
         },
         "networkInterfaceName": {
-            "defaultValue": "[substring(concat('NIC-', parameters('virtualMachineName')), 0, 8)]",
+            "defaultValue": "[substring(concat('NIC-', parameters('virtualMachineName')), 0, 15)]",
             "type": "string"
         },
         "networkSecurityGroupName": {
-            "defaultValue": "[substring(concat('NSG-', parameters('virtualMachineName')), 0, 8)]",
+            "defaultValue": "[substring(concat('NSG-', parameters('virtualMachineName')), 0, 15)]",
             "type": "string"
         },
         "networkSecurityGroupRules": {
