@@ -6,7 +6,7 @@
             "value": "switzerlandnorth"
         },
         "virtualNetworkId": {
-            "value": "/subscriptions/4ee84293-12d3-46b5-9e7f-613f200c7448/resourceGroups/Main-IT/providers/Microsoft.Network/virtualNetworks/Swiss"
+            "value": "/subscriptions/4ee84293-12d3-46b5-9e7f-613f200c7448/resourceGroups/Main-IT/providers/Microsoft.Network/virtualNetworks/India"
         }
     }
 }
