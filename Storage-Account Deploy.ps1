@@ -4,9 +4,7 @@ Get-AzVM | format-table Name, ResourceGroupName, Location
 $resourceGroupName = Read-Host -Prompt "Enter the Resource Group name"
 $location = Read-Host -Prompt "Enter the location"
 
-New-AzResourceGroupDeployment -Location $location -ResourceGroupName $resourceGroupName -TemplateUri "C:\Users\mahesh\Desktop\STA-Template\STA-template.json" -TemplateParameterFile "C:\Users\mahesh\Desktop\STA-Template\STA-parameters.json"
-
-Read-Host -Prompt "Press Enter to continue..."
+New-AzResourceGroupDeployment -Location $location -ResourceGroupName $resourceGroupName -TemplateUri "C:\Users\E1556093\OneDrive - Emerson\Desktop\Azure\Azure\STA-template.json" -TemplateParameterUri "https://raw.githubusercontent.com/maheshyadavkosli-sys/Azure/refs/heads/main/STA-parameters.json"
 
 #############################################################################
 
