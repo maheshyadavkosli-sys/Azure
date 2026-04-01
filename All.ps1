@@ -17,7 +17,7 @@ $outputFile = "C:\inetpub\wwwroot\iisstart.htm" # Specify your desired file path
 Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -ne "127.0.0.1" -and $_.AddressState -eq "Preferred" } | Select-Object -ExpandProperty IPAddress | Out-File -Append -FilePath $outputFile
 
 "--- Done ---" | Out-File -Append -FilePath $outputFile
-Read-Host -Prompt "Press Enter to continue..."
+
 #endregion
 
 #region Storage-General-Purpose-Account-V2
@@ -32,3 +32,48 @@ Get-AzVirtualNetwork
 Get-AzVM
 
 #endregion
+
+
+#Changing all route tables at once 
+# Define variables
+$location = read-host -prompt "location"
+$resourceGroup = read-host -prompt "Resource Group"
+$routeTableName = read-host -prompt "Route Table"
+$newNextHopIp = read-host -prompt "New Next Hop" # New IP address
+$newNextHopType = "VirtualAppliance"
+$sourceRouteTable = Get-AzRouteTable -ResourceGroupName $resourceGroup -Name "USA-Route-Table"
+New-AzRouteTable -ResourceGroupName $resourceGroup -Name $routeTableName -Location $location -Route $sourceRouteTable.Routes
+# 1. Get the current Route Table object
+$routeTable = Get-AzRouteTable -ResourceGroupName $resourceGroup -Name $routeTableName
+
+# 2. Iterate through each route and update its config in the local object
+foreach ($route in $($routeTable.Routes)) {
+    $routeTable = Set-AzRouteConfig -RouteTable $routeTable `
+                                   -Name $route.Name `
+                                   -AddressPrefix $route.AddressPrefix `
+                                   -NextHopType $newNextHopType `
+                                   -NextHopIpAddress $newNextHopIp
+}
+
+# 3. Save the modified Route Table back to Azure
+$routeTable | Set-AzRouteTable
+
+
+# Get all VMs in a specific Resource Group
+$vms = Get-AzVM -ResourceGroupName "HR"
+
+# Loop through and run the command
+$vms | ForEach-Object -Parallel {
+    Invoke-AzVMRunCommand -ResourceGroupName $_.ResourceGroupName `
+                          -VMName $_.Name `
+                          -CommandId 'RunPowerShellScript' `
+                          -ScriptPath 'C:\Data\VM.ps1'
+} -ThrottleLimit 10
+
+
+
+
+stop-service -name RemoteAccess
+
+Set-Service -Name "RemoteAccess" -Status Running -StartupType Automatic
+Start-service -Name RemoteAccess
